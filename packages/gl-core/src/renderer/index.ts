@@ -12,7 +12,7 @@ import ScreenPass from './pass/particles/screen';
 import ParticlesPass from './pass/particles/particles';
 import PickerPass from './pass/picker';
 import { isFunction, resolveURL } from '../utils/common';
-import {createLinearGradient, createZoom, isRasterize} from '../utils/style-parser';
+import { createLinearGradient, createZoom, isRasterize } from '../utils/style-parser';
 import type { MaskType } from '../type';
 import { getBandType, RenderFrom, RenderType } from '../type';
 import type { SourceType } from '../source';
@@ -622,12 +622,12 @@ export default class BaseLayer {
         particlesPass.resetParticles();
       }
 
+      // Disable ALL particle passes during pan/zoom — avoids raw dots rendering
+      // directly on the canvas (which happened because ParticlesPass was left
+      // enabled in prerender=false mode while ScreenPass was disabled).
       this.renderPipeline.passes.forEach((pass) => {
-        if (pass.id === 'ParticlesTexturePass' || pass.id === 'ScreenPass') {
+        if (pass.id === 'ParticlesTexturePass' || pass.id === 'ScreenPass' || pass.id === 'ParticlesPass') {
           pass.enabled = false;
-        }
-        if (pass.id === 'ParticlesPass') {
-          pass.prerender = false;
         }
       });
     }
@@ -643,13 +643,12 @@ export default class BaseLayer {
       }
 
       this.renderPipeline.passes.forEach((pass) => {
-        if (pass.id === 'ParticlesTexturePass' || pass.id === 'ScreenPass') {
+        if (pass.id === 'ParticlesTexturePass' || pass.id === 'ScreenPass' || pass.id === 'ParticlesPass') {
           pass.enabled = true;
         }
 
         if (pass.id === 'ParticlesPass') {
           pass.prerender = true;
-          // pass.resetParticles();
         }
       });
     }

@@ -168,6 +168,15 @@ export default class ParticlesComposePass extends Pass<ParticlesComposePassOptio
 
       rendererState.sharedState.u_tiles_size = [width, height];
 
+      // Ensure compose FBO is at least viewport-sized so particle velocity sampling
+      // has adequate per-pixel resolution and doesn't produce square clustering artifacts
+      const vpWidth = this.renderer.width;
+      const vpHeight = this.renderer.height;
+      if (vpWidth > 0 && vpHeight > 0) {
+        width = Math.max(width, vpWidth);
+        height = Math.max(height, vpHeight);
+      }
+
       const maxTextureSize = this.renderer.gl.getParameter(this.renderer.gl.MAX_TEXTURE_SIZE) * 0.5;
       const maxRenderBufferSize = this.renderer.gl.getParameter(this.renderer.gl.MAX_RENDERBUFFER_SIZE) * 0.5;
       const maxSize = Math.max(width, height);

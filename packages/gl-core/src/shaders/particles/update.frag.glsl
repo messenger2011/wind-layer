@@ -74,10 +74,19 @@ vec2 update(vec2 pos) {
 
     float speed = length(velocity);
 
-    vec2 v = vec2(velocity.x, -velocity.y);
+    // Minimum visual speed: ensures calm-area particles still move enough pixels
+    // per frame to form a visible directional trail.
+    // Only affects movement — draw.frag reads the raw tile data for colors,
+    // so the color display (blue=calm, green=strong) remains accurate.
+    // TRUE zero-wind (speed < 0.001) is kept at zero to avoid phantom motion.
+    const float MIN_VISUAL_SPEED = 2.5; // m/s — tune lower (e.g. 1.5) for subtler boost
+    float visualSpeed = speed > 0.001 ? max(speed, MIN_VISUAL_SPEED) : 0.0;
+    vec2 vv = speed > 0.001 ? velocity * (visualSpeed / speed) : velocity;
+
+    vec2 v = vec2(vv.x, -vv.y);
 
     if (u_flip_y) {
-        v = vec2(velocity.x, velocity.y);
+        v = vec2(vv.x, vv.y);
     }
 
     vec2 offset = v * 0.0001 * u_speed_factor * u_gl_scale;
@@ -109,7 +118,8 @@ void main() {
     pos = update(pos);
     // 初始化时为避免粒子随机位置接近，先执行 25 次迭代
     if (u_initialize) {
-        pos = randomPosToGlobePos(pos);
+        // Seed with particle's own UV index for uniform initial coverage across bbox
+        pos = randomPosToGlobePos(vec2(rand(vUv * u_rand_seed + 1.3), rand(vUv * u_rand_seed + 2.1)));
         for (int i = 0; i < 25; i++) {
             pos = update(pos);
         }

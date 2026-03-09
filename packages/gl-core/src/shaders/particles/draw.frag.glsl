@@ -55,11 +55,17 @@ bool containsXY(vec2 pos, vec4 bbox) {
 void main() {
     vec2 pos = v_particle_pos;
 
-    if (!containsXY(pos.xy, u_data_bbox) || !containsXY(pos.xy, u_bbox) || calcTexture(pos).a == 0.0) {
+    if (!containsXY(pos.xy, u_data_bbox) || !containsXY(pos.xy, u_bbox)) {
         discard;
     }
 
-    vec2 velocity = bilinear(pos);
+    vec2 uv = (pos.xy - u_data_bbox.xy) / (u_data_bbox.zw - u_data_bbox.xy);
+
+    if (calcTexture(uv).a == 0.0) {
+        discard;
+    }
+
+    vec2 velocity = bilinear(uv);
 
     float value = length(velocity);
 
